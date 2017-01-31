@@ -46,6 +46,18 @@ module CapstoneDemo
       end
     end
 
+    config.generators do |g|
+      g.test_framework :rspec,
+                       :model_specs => true,
+                       :routing_specs => false,
+                       :controller_specs => false,
+                       :helper_specs => false,
+                       :view_specs => false,
+                       :request_specs => true,
+                       :policy_specs => false,
+                       :feature_specs => true
+    end
+
     config.active_record.raise_in_transactional_callbacks = true
   end
 end
