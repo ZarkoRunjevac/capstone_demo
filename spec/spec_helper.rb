@@ -14,9 +14,14 @@
 #
 # The `.rspec` file also contains a few flags that are not defaults but that
 # users commonly want.
+
+require 'mongoid-rspec'
+
 #
 # See http://rubydoc.info/gems/rspec-core/RSpec/Core/Configuration
 RSpec.configure do |config|
+  config.include Mongoid::Matchers, :orm => :mongoid
+
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest
   # assertions if you prefer.
@@ -68,10 +73,6 @@ RSpec.configure do |config|
   #   - http://www.teaisaweso.me/blog/2013/05/27/rspecs-new-message-expectation-syntax/
   #   - http://rspec.info/blog/2014/05/notable-changes-in-rspec-3/#zero-monkey-patching-mode
   config.disable_monkey_patching!
-
-  # This setting enables warnings. It's recommended, but in some cases may
-  # be too noisy due to issues in dependencies.
-  config.warnings = true
 
   # Many RSpec users commonly either run the entire suite or an individual
   # file, and it's useful to allow more verbose output when running an
