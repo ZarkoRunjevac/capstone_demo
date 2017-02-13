@@ -5,7 +5,7 @@
         .module("spa-demo.foos")
         .directive("fooForm", FoosFormDirective);
 
-    FoosFormDirective.$inject = ["spa-demo.APP_CONFIG"];
+    FoosFormDirective.$inject = ["spa-demo.config.APP_CONFIG"];
 
     function FoosFormDirective(APP_CONFIG) {
         var directive = {

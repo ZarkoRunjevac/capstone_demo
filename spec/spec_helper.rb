@@ -19,6 +19,7 @@ require 'mongoid-rspec'
 require 'capybara/rspec'
 require_relative 'support/database_cleaners.rb'
 require_relative 'support/api_helper.rb'
+require_relative 'support/ui_helper.rb'
 
 browser=:chrome
 Capybara.register_driver :selenium do |app|
@@ -77,6 +78,7 @@ end
 RSpec.configure do |config|
   config.include Mongoid::Matchers, :orm => :mongoid
   config.include ApiHelper, :type=>:request
+  config.include UiHelper, :type=>:feature
 
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest

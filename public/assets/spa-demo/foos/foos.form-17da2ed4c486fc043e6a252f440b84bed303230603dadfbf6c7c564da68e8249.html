@@ -1,0 +1,17 @@
+<div>
+    <h3>Foos</h3>
+    <h3>Foos</h3>
+    <span>(from spa-demo/foos/foos.form.html)</span>
+    <form>
+        <div>
+            <label>Name:</label>
+            <input name="name" ng-model="foosFormVM.foo.name" required="required">
+        </div>
+        <button ng-if="!foosFormVM.foo.id" type="submit" ng-click="foosFormVM.create()">Create Foo</button>
+        <div ng-if="foosFormVM.foo.id">
+            <button type="submit" ng-click="foosFormVM.update()">Update Foo</button>
+            <button type="submit" ng-click="foosFormVM.remove()">Delete Foo</button>
+        </div>
+    </form>
+
+</div>
