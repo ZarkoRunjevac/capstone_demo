@@ -9551,12 +9551,48 @@ button.close {
     display: none !important;
   }
 }
+/*
+ * layout.css
+ */
+
+
 body {
-    background-color: #d2b18c;
+    background-color: #d2b48c;
+}
+
+form .invalid {
+    color: red;
+}
+
+.fullsize {
+    padding-right: 0px;
+    padding-left: 0px;
+}
+
+/*********** navbar *************/
+
+.nav li form {
+    padding-left: 10px; /* adds spacing along left of dropdown menu form */
+    padding-right: 10px;
+}
+
+span#user_id {
+    display: none;
+}
+
+#login-form #new-account label {
+    width: auto; /* flatten the New here? label */
+    margin-top: 5px; /* separate from the Login button */
+    margin-right: 10px; /* separate "New here?" label and "Sing Up" link */
+}
+
+div#logout-identity {
+    text-align: center; /* keep organized as name in label gets long */
 }
 /*
  * SPA Demo Stylesheet Manifest File
  *
+
 
 
  */

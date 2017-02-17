@@ -8,8 +8,7 @@
     AuthnConfig.$inject = ["$authProvider", "spa-demo.config.APP_CONFIG"];
     function AuthnConfig($authProvider, APP_CONFIG) {
         $authProvider.configure({
-            apiUrl: APP_CONFIG.server_url,
-            validateOnPageLoad: false
+            apiUrl: APP_CONFIG.server_url
         });
     }
 
