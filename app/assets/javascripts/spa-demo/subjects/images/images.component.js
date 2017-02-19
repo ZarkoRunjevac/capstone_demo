@@ -55,17 +55,15 @@
     }
 
 
-    ImageEditorController.$inject = ["$scope",
-        /*"$q", */
-        "$state",
-        "$stateParams",
-        // "spa-demo.authz.Authz",
-        "spa-demo.subjects.Image"/* ,
-       "spa-demo.subjects.ImageThing",
-        "spa-demo.subjects.ImageLinkableThing",*/
-    ];
-    function ImageEditorController($scope, /*$q,*/ $state, $stateParams,
-                                  /* Authz,*/ Image/*, ImageThing,ImageLinkableThing*/) {
+     ImageEditorController.$inject = ["$scope","$q",
+                                   "$state", "$stateParams",
+                                   "spa-demo.subjects.Image",
+                                   "spa-demo.subjects.ImageThing",
+                                   "spa-demo.subjects.ImageLinkableThing",
+                                   ];
+  function ImageEditorController($scope, $q, $state, $stateParams, 
+                                 Image, ImageThing,ImageLinkableThing) {
+
         var vm=this;
         /*vm.selected_linkables=[];*/
         vm.create = create;
@@ -76,19 +74,19 @@
 
         vm.$onInit = function() {
             console.log("ImageEditorController",$scope);
-            if ($stateParams.id) {
-                vm.item=Image.get({id:$stateParams.id});
+            /*if ($stateParams.id) {
+               reload($stateParams.id);
             } else {
                 newResource();
-            }
-            /*$scope.$watch(function(){ return Authz.getAuthorizedUserId(); },
+            }*/
+            $scope.$watch(function(){ return Authz.getAuthorizedUserId(); },
                 function(){
                     if ($stateParams.id) {
                         reload($stateParams.id);
                     } else {
                         newResource();
                     }
-                });*/
+                });
         }
         return;
         //////////////
@@ -105,7 +103,7 @@
             vm.item = Image.get({id:itemId});
             vm.things = ImageThing.query({image_id:itemId});
             vm.linkable_things = ImageLinkableThing.query({image_id:itemId});
-            vm.imagesAuthz.newItem(vm.item);
+            /*vm.imagesAuthz.newItem(vm.item);*/
             $q.all([vm.item.$promise,
                 vm.things.$promise]).catch(handleError);
         }
@@ -116,7 +114,7 @@
         }
 
         function create() {
-            $scope.imageform.$setPristine();
+            //$scope.imageform.$setPristine();
             vm.item.errors=null;
             vm.item.$save().then(
                 function(){
@@ -126,16 +124,18 @@
         }
 
         function update() {
-            $scope.imageform.$setPristine();
-            vm.item.errors = null;
+            //$scope.imageform.$setPristine();
+            /*vm.item.errors = null;
             vm.item.$update().then(
                 function () {
                     console.log("update complete", vm.item);
+                    $scope.imageform.$setPristine();
                     $state.reload();
                 },
-                handleError);
-            /*var update=vm.item.$update();
-            linkThings(update);*/
+                handleError);*/
+            vm.item.errors = null;
+            var update=vm.item.$update();
+            linkThings(update);
         }
 
         function linkThings(parentPromise) {

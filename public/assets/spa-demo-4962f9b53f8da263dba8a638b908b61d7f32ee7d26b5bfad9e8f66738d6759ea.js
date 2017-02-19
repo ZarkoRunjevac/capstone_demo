@@ -50486,17 +50486,17 @@ window.isEmpty = function(obj) {
             main_page_html: "/assets/spa-demo/pages/main-33801a41354b4f44abbfe670df33dacc0e236d965933935cfb2b10805ef0dfff.html",
             signup_page_html: "/assets/spa-demo/pages/signup_page-98660912585ec6dccd5328d1bf6c8ee256f633e2c50325225c502315d6179574.html",
             authn_page_html: "/assets/spa-demo/pages/authn_page-6c695ab9359c5ae6944b9c8b01d12ce3c2dbcb36f3f3c411d2ab1aeede2b0ac3.html",
-            images_page_html: "/assets/spa-demo/pages/images_page-99b48cd583cb28a576ef0f07f1d15a282a18a6f8e98e15ae53e9cc1645545346.html",
-            things_page_html: "/spa-demo/pages/things_page.html",
+            images_page_html: "/assets/spa-demo/pages/images_page-7862157465cc6345859e430fadcc77c13cdf5aff7f1ff6da1cb612e114b6f639.html",
+            things_page_html: "/assets/spa-demo/pages/things_page-db7f7137ad038ffd03454f8105cbeabd05dfbe3ed51ddf02e8c5f77cdbcfa567.html",
 
-            navbar_html: "/assets/spa-demo/layout/navbar/navbar-a4496a09946a226b082ecd4c3a9c1fc6c5c401d47858613c1db3e4d67488304d.html",
+            navbar_html: "/assets/spa-demo/layout/navbar/navbar-21b8339c38f81defb4996c7a898646f65af321be8bb61888915cc14e737ea28e.html",
             authn_session_html: "/assets/spa-demo/authn/authn_session/authn_session-bdcf2dbbe1b0cf62bd6140784e41060fe487fffa4f00680bd0dbea2745899c89.html",
             authn_signup_html: "/assets/spa-demo/authn/signup/signup-3d65f8d15ac3e2811771a4faa8f6ccd7bad70a311be52dfd44a2803da2f09ca9.html",
             foos_html: "/assets/spa-demo/foos/foos-83670e8535e8d0527ca77d7b294978810396afc924edc1e9b4fccf4fd2a1a0f9.html",
-            image_selector_html: "/assets/spa-demo/subjects/images/image_selector-0ea67ec6043bac81763a00109f0d75ae91026ceea3707f657870d63eaa993438.html",
-            image_editor_html: "/spa-demo/subjects/images/image_editor.html",
-            thing_editor_html: "/spa-demo/subjects/things/thing_editor.html",
-            thing_selector_html: "/spa-demo/subjects/things/thing_selector.html",
+            image_selector_html: "/assets/spa-demo/subjects/images/image_selector-03563c919d96f3d1285f9c1c5e21a1496823383d2a2dd7eb36c18372193b2c2e.html",
+            image_editor_html: "/assets/spa-demo/subjects/images/image_editor-de66fefb79bfff7cce25d8245d51ad297c3cd5c8a37431e9dc55c40a6757a0e7.html",
+            thing_editor_html: "/assets/spa-demo/subjects/things/thing_editor-d078cdf6b0a562439e9ba645e8f840623f9cb41d4deef3277b02370a553d7b33.html",
+            thing_selector_html: "/assets/spa-demo/subjects/things/thing_selector-4e44d1bcbf0a304b0c63b76d9e3e2797e272c18f4a7fbcde1d23d12b52ca8413.html",
         });
 
 })();
@@ -50556,7 +50556,7 @@ window.isEmpty = function(obj) {
             return $auth.submitRegistration(registration);
         }
         function isAuthenticated() {
-            return service.user && service.user["uid"];
+            return service.user!=null && service.user["uid"]!=null;
         }
         function getCurrentUserName() {
             return service.user ? service.user.name : null;
@@ -50982,20 +50982,20 @@ window.isEmpty = function(obj) {
         .component("sdImageSelector", {
             templateUrl: imageSelectorTemplateUrl,
             controller: ImageSelectorController,
-            /*bindings: {
+            bindings: {
                 authz: "<"
-            },*/
+            },
         })
-        /*.component("sdImageEditor", {
+        .component("sdImageEditor", {
             templateUrl: imageEditorTemplateUrl,
             controller: ImageEditorController,
             bindings: {
                 authz: "<"
-            },
+            }/*,
             require: {
                 imagesAuthz: "^sdImagesAuthz"
-            }
-        })*/;
+            }*/
+        });
 
 
     imageSelectorTemplateUrl.$inject = ["spa-demo.config.APP_CONFIG"];
@@ -51009,59 +51009,69 @@ window.isEmpty = function(obj) {
 
     ImageSelectorController.$inject = ["$scope",
         "$stateParams",
-        "spa-demo.authz.Authz",
+        //"spa-demo.authz.Authz",
         "spa-demo.subjects.Image"];
-    function ImageSelectorController($scope, $stateParams, Authz, Image) {
+    function ImageSelectorController($scope, $stateParams, /*Authz,*/ Image) {
         var vm=this;
 
         vm.$onInit = function() {
             console.log("ImageSelectorController",$scope);
-            $scope.$watch(function(){ return Authz.getAuthorizedUserId(); },
+            /*$scope.$watch(function(){ return Authz.getAuthorizedUserId(); },
                 function(){
                     if (!$stateParams.id) {
                         vm.items = Image.query();
                     }
-                });
+                });*/
+            if(!$stateParams.id){
+                vm.items=Image.query();
+            }
         }
         return;
         //////////////
     }
 
 
-    ImageEditorController.$inject = ["$scope","$q",
-        "$state", "$stateParams",
-        "spa-demo.authz.Authz",
-        "spa-demo.subjects.Image",
-        "spa-demo.subjects.ImageThing",
-        "spa-demo.subjects.ImageLinkableThing",
+    ImageEditorController.$inject = ["$scope",
+        /*"$q", */
+        "$state",
+        "$stateParams",
+        // "spa-demo.authz.Authz",
+        "spa-demo.subjects.Image"/* ,
+       "spa-demo.subjects.ImageThing",
+        "spa-demo.subjects.ImageLinkableThing",*/
     ];
-    function ImageEditorController($scope, $q, $state, $stateParams,
-                                   Authz, Image, ImageThing,ImageLinkableThing) {
+    function ImageEditorController($scope, /*$q,*/ $state, $stateParams,
+                                  /* Authz,*/ Image/*, ImageThing,ImageLinkableThing*/) {
         var vm=this;
-        vm.selected_linkables=[];
+        /*vm.selected_linkables=[];*/
         vm.create = create;
         vm.clear  = clear;
         vm.update  = update;
         vm.remove  = remove;
-        vm.linkThings = linkThings;
+        /*vm.linkThings = linkThings;*/
 
         vm.$onInit = function() {
             console.log("ImageEditorController",$scope);
-            $scope.$watch(function(){ return Authz.getAuthorizedUserId(); },
+            if ($stateParams.id) {
+                vm.item=Image.get({id:$stateParams.id});
+            } else {
+                newResource();
+            }
+            /*$scope.$watch(function(){ return Authz.getAuthorizedUserId(); },
                 function(){
                     if ($stateParams.id) {
                         reload($stateParams.id);
                     } else {
                         newResource();
                     }
-                });
+                });*/
         }
         return;
         //////////////
         function newResource() {
             console.log("newResource()");
             vm.item = new Image();
-            vm.imagesAuthz.newItem(vm.item);
+            //vm.imagesAuthz.newItem(vm.item);
             return vm.item;
         }
 
@@ -51082,6 +51092,8 @@ window.isEmpty = function(obj) {
         }
 
         function create() {
+            $scope.imageform.$setPristine();
+            vm.item.errors=null;
             vm.item.$save().then(
                 function(){
                     $state.go(".", {id: vm.item.id});
@@ -51090,9 +51102,16 @@ window.isEmpty = function(obj) {
         }
 
         function update() {
+            $scope.imageform.$setPristine();
             vm.item.errors = null;
-            var update=vm.item.$update();
-            linkThings(update);
+            vm.item.$update().then(
+                function () {
+                    console.log("update complete", vm.item);
+                    $state.reload();
+                },
+                handleError);
+            /*var update=vm.item.$update();
+            linkThings(update);*/
         }
 
         function linkThings(parentPromise) {
@@ -51139,7 +51158,483 @@ window.isEmpty = function(obj) {
     }
 
 })();
+(function() {
+    "use strict";
+
+    angular
+        .module("spa-demo.subjects")
+        .factory("spa-demo.subjects.Image", ImageFactory);
+
+    ImageFactory.$inject = ["$resource", "spa-demo.config.APP_CONFIG"];
+    function ImageFactory($resource, APP_CONFIG) {
+        var service = $resource(APP_CONFIG.server_url + "/api/images/:id",
+            { id: '@id' },
+            {
+                update: {method: "PUT"},
+                save:   {method: "POST", transformRequest: checkEmptyPayload }
+            });
+        return service;
+    }
+
+    //rails wants at least one parameter of the document filled in
+    //all of our fields are optional
+    //ngResource is not passing a null field by default, we have to force it
+    function checkEmptyPayload(data) {
+        if (!data['caption']) {
+            data['caption']=null;
+        }
+        return angular.toJson(data);
+    }
+})();
+(function() {
+    "use strict";
+
+    angular
+        .module("spa-demo.subjects")
+        .directive("sdImagesAuthz", ImagesAuthzDirective);
+
+    ImagesAuthzDirective.$inject = [];
+
+    function ImagesAuthzDirective() {
+        var directive = {
+            bindToController: true,
+            controller: ImagesAuthzController,
+            controllerAs: "vm",
+            restrict: "A",
+            scope:{
+                authz:'='
+            },
+            link: link
+        };
+        return directive;
+
+        function link(scope, element, attrs) {
+            console.log("ImagesAuthzDirective", scope);
+        }
+    }
+
+    ImagesAuthzController.$inject = ["$scope",
+        "spa-demo.authn.Authn"];
+    function ImagesAuthzController($scope, Authn) {
+        var vm = this;
+        vm.authz={};
+        vm.authz.authenticated = false;
+        vm.authz.canCreate     = false;
+        vm.authz.canQuery      = false;
+        vm.authz.canUpdate     = false;
+        vm.authz.canDelete     = false;
+        vm.authz.canGetDetails = false;
+        vm.authz.canUpdateItem = canUpdateItem;
+        //vm.newItem=newItem;
+
+        ImagesAuthzController.prototype.resetAccess=function () {
+            this.authz.canCreate     = false;
+            this.authz.canQuery      = true;
+            this.authz.canUpdate     = false;
+            this.authz.canDelete     = false;
+            this.authz.canGetDetails = true;
+        }
+
+        activate();
+        return;
+        //////////
+        function activate() {
+            vm.resetAccess();
+            $scope.$watch(Authn.getCurrentUser,newUser);
+        }
+
+        function newUser(user, prevUser) {
+            console.log("newUser=",user,", prev=",prevUser);
+            vm.authz.canQuery       =true;
+            vm.authz.authenticated=Authn.isAuthenticated();
+            if(vm.authz.authenticated){
+                vm.authz.canCreate     = true;
+                vm.authz.canQuery      = true;
+                vm.authz.canUpdate     = true;
+                vm.authz.canDelete     = true;
+                vm.authz.canGetDetails = true;
+            }else{
+                vm.resetAccess();
+            }
+        }
+
+        function canUpdateItem(item) {
+            return Authn.isAuthenticated();
+        }
+
+        /*function newItem(item) {
+            ImagesAuthz.getAuthorizedUser().then(
+                function(user){ authzUserItem(item, user); },
+                function(user){ authzUserItem(item, user); });
+        }
+
+        function authzUserItem(item, user) {
+            console.log("new Item/Authz", item, user);
+
+            vm.authz.authenticated = ImagesAuthz.isAuthenticated();
+            vm.authz.canQuery      = ImagesAuthz.canQuery();
+            vm.authz.canCreate = ImagesAuthz.canCreate();
+            if (item && item.$promise) {
+                vm.authz.canUpdate     = false;
+                vm.authz.canDelete     = false;
+                vm.authz.canGetDetails = false;
+                item.$promise.then(function(){ checkAccess(item); });
+            } else {
+                checkAccess(item)
+            }
+        }
+
+        function checkAccess(item) {
+            vm.authz.canUpdate     = ImagesAuthz.canUpdate(item);
+            vm.authz.canDelete     = ImagesAuthz.canDelete(item);
+            vm.authz.canGetDetails = ImagesAuthz.canGetDetails(item);
+            console.log("checkAccess", item, vm.authz);
+        }*/
+
+
+    }
+})();
+(function() {
+    "use strict";
+
+    angular
+        .module("spa-demo.subjects")
+        .component("sdThingSelector", {
+            templateUrl: thingSelectorTemplateUrl,
+            controller: ThingSelectorController,
+            bindings: {
+                authz: "<"
+            },
+        })
+        .component("sdThingEditor", {
+          templateUrl: thingEditorTemplateUrl,
+          controller: ThingEditorController,
+          bindings: {
+            authz: "<"
+          }
+    });
+
+
+
+    thingSelectorTemplateUrl.$inject = ["spa-demo.config.APP_CONFIG"];
+    function thingSelectorTemplateUrl(APP_CONFIG) {
+        return APP_CONFIG.thing_selector_html;
+    }
+    thingEditorTemplateUrl.$inject = ["spa-demo.config.APP_CONFIG"];
+    function thingEditorTemplateUrl(APP_CONFIG) {
+        return APP_CONFIG.thing_editor_html;
+    }
+
+    ThingSelectorController.$inject = ["$scope",
+        "$stateParams",
+        //"spa-demo.authz.Authz",
+        "spa-demo.subjects.Thing"];
+    function ThingSelectorController($scope, $stateParams, /*Authz,*/ Thing) {
+        var vm=this;
+
+        vm.$onInit = function() {
+            console.log("ThingSelectorController",$scope);
+            /*$scope.$watch(function(){ return Authz.getAuthorizedUserId(); },
+                function(){
+                    if (!$stateParams.id) {
+                        vm.items = Thing.query();
+                    }
+                });*/
+            if(!$stateParams.id){
+                vm.items=Thing.query();
+            }
+        }
+        return;
+        //////////////
+    }
+
+    ThingEditorController.$inject = ["$scope",
+        /*"$q", */
+        "$state",
+        "$stateParams",
+        // "spa-demo.authz.Authz",
+        "spa-demo.subjects.Thing"/* ,
+       "spa-demo.subjects.ThingThing",
+        "spa-demo.subjects.ThingLinkableThing",*/
+    ];
+    function ThingEditorController($scope, /*$q,*/ $state, $stateParams,
+                                  /* Authz,*/ Thing/*, ThingThing,ThingLinkableThing*/) {
+        var vm=this;
+        /*vm.selected_linkables=[];*/
+        vm.create = create;
+        vm.clear  = clear;
+        vm.update  = update;
+        vm.remove  = remove;
+        /*vm.linkThings = linkThings;*/
+
+        vm.$onInit = function() {
+            console.log("ThingEditorController",$scope);
+            if ($stateParams.id) {
+                vm.item=Thing.get({id:$stateParams.id});
+            } else {
+                newResource();
+            }
+            /*$scope.$watch(function(){ return Authz.getAuthorizedUserId(); },
+                function(){
+                    if ($stateParams.id) {
+                        reload($stateParams.id);
+                    } else {
+                        newResource();
+                    }
+                });*/
+        }
+        return;
+        //////////////
+        function newResource() {
+            console.log("newResource()");
+            vm.item = new Thing();
+            //vm.ThingsAuthz.newItem(vm.item);
+            return vm.item;
+        }
+
+        function reload(ThingId) {
+            var itemId = ThingId ? ThingId : vm.item.id;
+            console.log("re/loading Thing", itemId);
+            vm.item = Thing.get({id:itemId});
+            vm.things = ThingThing.query({Thing_id:itemId});
+            vm.linkable_things = ThingLinkableThing.query({Thing_id:itemId});
+            vm.ThingsAuthz.newItem(vm.item);
+            $q.all([vm.item.$promise,
+                vm.things.$promise]).catch(handleError);
+        }
+
+        function clear() {
+            newResource();
+            $state.go(".", {id:null});
+        }
+
+        function create() {
+            $scope.thingform.$setPristine();
+            vm.item.errors=null;
+            vm.item.$save().then(
+                function(){
+                    $state.go(".", {id: vm.item.id});
+                },
+                handleError);
+        }
+
+        function update() {
+            $scope.thingform.$setPristine();
+            vm.item.errors = null;
+            vm.item.$update().then(
+                function () {
+                    console.log("update complete", vm.item);
+                    $state.reload();
+                },
+                handleError);
+            /*var update=vm.item.$update();
+            linkThings(update);*/
+        }
+
+        function linkThings(parentPromise) {
+            var promises=[];
+            if (parentPromise) { promises.push(parentPromise); }
+            angular.forEach(vm.selected_linkables, function(linkable){
+                var resource=ThingThing.save({Thing_id:vm.item.id}, {thing_id:linkable});
+                promises.push(resource.$promise);
+            });
+
+            vm.selected_linkables=[];
+            console.log("waiting for promises", promises);
+            $q.all(promises).then(
+                function(response){
+                    console.log("promise.all response", response);
+                    $scope.thingform.$setPristine();
+                    reload();
+                },
+                handleError);
+        }
+
+        function remove() {
+            vm.item.errors = null;
+            vm.item.$delete().then(
+                function(){
+                    console.log("remove complete", vm.item);
+                    clear();
+                },
+                handleError);
+        }
+
+
+        function handleError(response) {
+            console.log("error", response);
+            if (response.data) {
+                vm.item["errors"]=response.data.errors;
+            }
+            if (!vm.item.errors) {
+                vm.item["errors"]={}
+                vm.item["errors"]["full_messages"]=[response];
+            }
+            $scope.thingform.$setPristine();
+        }
+    }
+
+
+
+})();
+(function() {
+    'use strict';
+
+    angular
+        .module('spa-demo.subjects')
+        .service('spa-demo.subjects.Thing', ThingFactory);
+
+    ThingFactory.$inject = ["$resource", "spa-demo.config.APP_CONFIG"];
+
+    /* @ngInject */
+    function ThingFactory($resource,APP_CONFIG) {
+         var service = $resource(APP_CONFIG.server_url + "/api/things/:id",
+            { id: '@id' },
+            {
+                update: {method: "PUT"},
+                save:   {method: "POST", transformRequest: checkEmptyPayload }
+            });
+        return service;
+        
+    }
+
+    //rails wants at least one parameter of the document filled in
+    //all of our fields are optional
+    //ngResource is not passing a null field by default, we have to force it
+   function checkEmptyPayload(data) {
+        if (!data['description']) {
+            data['description']=null;
+        }
+
+       if (!data['notes']) {
+            data['notes']=null;
+        }
+        return angular.toJson(data);
+    }
+})();
+(function() {
+    "use strict";
+
+    angular
+        .module("spa-demo.subjects")
+        .directive("sdThingsAuthz", ThingsAuthzDirective);
+
+    ThingsAuthzDirective.$inject = [];
+
+    function ThingsAuthzDirective() {
+        var directive = {
+            bindToController: true,
+            controller: ThingsAuthzController,
+            controllerAs: "vm",
+            restrict: "A",
+            scope:{
+                authz:'='
+            },
+            link: link
+        };
+        return directive;
+
+        function link(scope, element, attrs) {
+            console.log("ThingsAuthzDirective", scope);
+        }
+    }
+
+    ThingsAuthzController.$inject = ["$scope",
+        "spa-demo.authn.Authn"];
+    function ThingsAuthzController($scope, Authn) {
+        var vm = this;
+        vm.authz={};
+        vm.authz.authenticated = false;
+        vm.authz.canCreate     = false;
+        vm.authz.canQuery      = false;
+        vm.authz.canUpdate     = false;
+        vm.authz.canDelete     = false;
+        vm.authz.canGetDetails = false;
+        vm.authz.canUpdateImage = false;
+        vm.authz.canRemoveImage = false;
+        vm.authz.canUpdateItem = canUpdateItem;
+        //vm.newItem=newItem;
+
+        ThingsAuthzController.prototype.resetAccess=function () {
+            this.authz.canCreate     = false;
+            this.authz.canQuery      = false;
+            this.authz.canUpdate     = false;
+            this.authz.canDelete     = false;
+            this.authz.canGetDetails = false;
+            this.authz.canUpdateImage = false;
+            this.authz.canRemoveImage = false;
+        }
+
+        activate();
+        return;
+        //////////
+        function activate() {
+            vm.resetAccess();
+            $scope.$watch(Authn.getCurrentUser,newUser);
+        }
+
+        function newUser(user, prevUser) {
+            console.log("newUser=",user,", prev=",prevUser);
+            vm.authz.canQuery       =true;
+            vm.authz.authenticated=Authn.isAuthenticated();
+            if(vm.authz.authenticated){
+                vm.authz.canQuery      = true;
+                vm.authz.canCreate     = true;
+                vm.authz.canUpdate     = true,
+                vm.authz.canDelete     = true,
+                vm.authz.canGetDetails = true;
+                vm.authz.canUpdateImage = true;
+                vm.authz.canRemoveImage = true;
+            }else{
+                vm.resetAccess();
+            }
+        }
+
+        function canUpdateItem(item) {
+            return Authn.isAuthenticated();
+        }
+
+        /*function newItem(item) {
+            ThingsAuthz.getAuthorizedUser().then(
+                function(user){ authzUserItem(item, user); },
+                function(user){ authzUserItem(item, user); });
+        }
+
+        function authzUserItem(item, user) {
+            console.log("new Item/Authz", item, user);
+
+            vm.authz.authenticated = ThingsAuthz.isAuthenticated();
+            vm.authz.canQuery      = ThingsAuthz.canQuery();
+            vm.authz.canCreate = ThingsAuthz.canCreate();
+            if (item && item.$promise) {
+                vm.authz.canUpdate     = false;
+                vm.authz.canDelete     = false;
+                vm.authz.canGetDetails = false;
+                item.$promise.then(function(){ checkAccess(item); });
+            } else {
+                checkAccess(item)
+            }
+        }
+
+        function checkAccess(item) {
+            vm.authz.canUpdate     = ThingsAuthz.canUpdate(item);
+            vm.authz.canDelete     = ThingsAuthz.canDelete(item);
+            vm.authz.canGetDetails = ThingsAuthz.canGetDetails(item);
+            console.log("checkAccess", item, vm.authz);
+        }*/
+
+
+    }
+})();
 // SPA Demo Javascript Manifest File
+
+
+
+
+
+
+
+
 
 
 
