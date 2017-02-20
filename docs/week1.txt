@@ -1,0 +1,210 @@
+Rails setup Application Setup Demo
+
+1 make folder manually
+2 git init .
+2 Add readme.md
+3 git commit -m "initial commit"
+4 create new rails app --- rails-api new . -T -d postgresql
+	-T not use default testing framework
+	-d to specify db
+	
+5 adjust database yml file	
+	**add to default username password i host
+		username: <%= ENV['POSTGRES_USER']%>
+		password: <%= ENV['POSTGRES_PASSWORD']%>
+		host: <% ENV['POSTGRES_HOST']%>
+	**CHANGE PRODUCTION SETTINGS
+	  adapter: postgresql
+	  encoding: unicode
+	  pool: 5
+	  url: <%= ENV['DATABASE_URL'] %>
+	  
+	  rake db:create
+	  rake db:migrate
+5* 	  POSTGRES_USER=postgres
+	  POSTGRES_PASSWORD=radrad
+	  POSTGRES_HOST=localhost
+6 add jbuilder to gemfile  gem 'jbuilder','~>2.0','>=2.6.0'
+		run bundle
+7 add definition to ApplicationController  include ActionController::ImplicitRender
+
+Example Requirements
+
+
+8 add gem 'rspec-rails', '~> 3.5', '>=3.5.2'
+
+9 install rspec    rails g rspec:install
+
+10 rails g rspec:request APIDevelopment
+
+11 rails-api g scaffold Foo name --orm active_record
+
+12 brise sve ako stavimo d mjesto g rails-api d scaffold Foo name --orm active_record
+
+13 bez specs rails-api g scaffold Foo name --orm active_rec
+ord --no-request-specs --no-routing-specs --no-controller-specs
+
+14 shell za db  rails db 
+	\d pregledama scheme
+	\d foos za pojedinacnu tabelu
+	\q quit
+15 rspec -e RDBMS -fd
+
+16 rake routes 
+
+Mongoid
+
+17 rails g scaffold Bar name --orm mongoid --no-request-specs --no-routing-specs --no-controller-specs
+
+18 add mongoid gem
+
+19 rails g mongoid:config
+
+20 edit mongoid:config
+
+21 add mongoid.load to application.rb Mongoid.load!('./config/mongoid.yml')
+
+22 in application.rb we set up default orm
+	config.generators {|g| g.orm :active_record}
+    #config.generators {|g| g.orm :mongoid}
+
+23 include Mongoid::Timestamps da bi dobili created_at updated_at u mongo modelima	
+
+24 rspec --format documentation	outputs informations about passing test also with failing tests
+
+25 rspec --fail-fast	stops at first failure	
+
+26 add httparty gem
+
+27 HTTParty.get("link",debug_output:$stdout)
+
+CORS
+
+28 add cors gem	gem 'rack-cors', '~>0.4', '>=0.4.0', :require => 'rack/cors'
+
+29 add config to application.rb
+	config.middleware.insert_before 0, "Rack::Cors" do
+		  allow do
+			origins /https:\/\/\w+\.github\.io/
+
+			resource '/api/*', 
+			  :headers => :any, 
+			  :methods => [:get, :post, :put, :delete, :options]
+		  end
+		end
+	
+Alternate Web Servers	PUMA
+gem 'puma', '~>3.6', '>=3.6.0', :platforms=>:ruby
+
+30 add puma.rb to config folder
+
+	workers Integer(ENV['WEB_CONCURRENCY'] || 2)
+	threads_count = Integer(ENV['RAILS_MAX_THREADS'] || 5)
+	threads threads_count, threads_count
+
+	preload_app!
+
+	rackup      DefaultRackup
+	port        ENV['PORT']     || 3000
+	environment ENV['RACK_ENV'] || 'development'
+
+	on_worker_boot do
+	  # Worker specific setup for Rails 4.1+
+	  # See: https://devcenter.heroku.com/articles/deploying-rails-applications-with-the-puma-web-server#on-worker-boot
+	  ActiveRecord::Base.establish_connection
+	end
+	
+31 add gem 'webrick', '~>1.3', '>=1.3.1', :platforms=>[:mingw, :mswin, :x64_mingw, :jruby]	
+
+Gemfile Summary
+
+32 add byebug gem for debuging	gem 'byebug', '~>9.0', '>=9.0.6'
+	continue idemo na sljedecu byebug
+	next sljedeca naredba
+
+33 diffrent shell gem 'pry-rails', '~>0.3', '>=0.3.4'
+		rails c
+		show-models
+		show-routes
+		ls @bar
+		cd @bar
+		
+34 add pry-byebug gem 'pry-byebug', '~>3.4', '>=3.4.0'
+	binding.pry
+
+35 
+	group :production do
+	  gem 'rails_12factor', '~>0.0', '>= 0.0.3'
+	end
+	
+Provisioning mLab MongoDB
+
+36 mlab
+
+user ZarkoRunjevac	
+password NUefsyivere2	
+
+API Deployment
+
+37 Heroku 
+password EPIftIfdivc5
+
+38 first create app 
+
+39 heroku apps:create casptone-demo- --remote staging
+	heroku apps:create casptone-demo-prod --remote production
+
+40 git remote -v	check out remotes
+
+41 Stagging
+	Create branch stagging-app	git checkout -b staging-app
+	Push stagging bracnch to master brach on staging part of heroku	 	git push staging staging-app:master
+	
+42 create controller ui	rails g controller ui	
+
+43 create folder app/views/ui
+
+44 create page index.html.erb 
+
+45 update routes 
+	root "ui#index"
+	get "/ui"=>'ui#index'
+	get "/ui#"=>'ui#index'
+	
+46 git add -A
+
+47 git commit -m "added main page with construction"
+
+48 push 		git push staging staging-app:master
+
+49 run remote migrate		heroku run rake db:migrate --remote staging
+
+50 heroku config --remote staging
+
+51 mongodb://<dbuser>:<dbpassword>@ds117839.mlab.com:17839/demoapp_staging
+
+52 set MLAB_URI		heroku config:set MLAB_URI=mongodb://dbuser:radrad@ds117839.mlab.com:17839/demoapp_staging --remote staging
+
+53 to force ssl go to config/environment/production.rb
+
+54 merge into master
+		git checkout master
+		git merge staging-app
+55 push production 		git push production master
+
+----------------
+mac command line 
+
+http://exponential.io/blog/2015/02/21/install-postgresql-on-mac-os-x-via-brew/
+http://stackoverflow.com/questions/21122598/postgres-user-does-not-exist
+http://stackoverflow.com/questions/23769579/default-password-for-my-user-in-postgresql
+
+source ¨/.bash_profile --reloads bash_profile
+
+start postgres brew services start postgresql
+
+add environment variable export POSTGRES_USER=
+
+check env variable echo $POSTGRES_USER
+	
+		

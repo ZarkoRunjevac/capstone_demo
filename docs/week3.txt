@@ -1,0 +1,410 @@
+RSpec DSL
+
+1 rails g rspec:model Foo
+
+	describe Foo, type: :model do
+	  
+	end
+	
+2 run spec with type model		 rspec --tag type:model -fd 	
+
+3 binding.pry	to step into
+
+4 add config generators to application.rb
+
+
+    config.generators do |g|
+      g.test_framework :rspec,
+        :model_specs => true,
+        :routing_specs => false,
+        :controller_specs => false,
+        :helper_specs => false,
+        :view_specs => false,
+        :request_specs => true,
+        :policy_specs => false,
+        :feature_specs => true
+    end
+	
+Spec Anatomy Part 1: Database Interaction and Blocks
+
+5
+
+  it "created Foo will be persisted, have a name, and be found" do
+    foo=Foo.create(:name => "test")
+    expect(foo).to be_persisted
+    expect(foo.name).to eq("test")
+    expect(Foo.find(foo.id)).to_not be_nil
+
+  end
+  
+6 go to rails console in test env		rails c -e test
+
+7 to see interaction add to test.rb		 Rails.logger=Logger.new(STDOUT)  ????
+
+8 let(:foo){Foo.create(:name => "test")}
+
+Spec Anatomy Part 2: Thinning Examples
+
+	context "created Foo (let)" do
+    let(:foo) { Foo.create(:name => "test") }
+
+    it { expect(foo).to be_persisted }
+    it { expect(foo.name).to eq("test") }
+    it { expect(Foo.find(foo.id)).to_not be_nil }
+  end
+
+  context "created Foo (subject)" do
+    subject { Foo.create(:name => "test") }
+
+    it { is_expected.to be_persisted }
+    it { expect(subject.name).to eq("test") }
+    it { expect(Foo.find(subject.id)).to_not be_nil }
+  end
+  
+  
+Spec Anatomy Part 3: Pending Examples and Lazy/Eager Let Blocks
+
+
+  context "created Foo (eager)" do
+    let!(:before_count) { Foo.count }
+    let(:foo)          { Foo.create(:name => "test") }
+
+    it { expect(foo).to be_persisted }
+    it { expect(foo.name).to eq("test") }
+    it { expect(Foo.find(foo.id)).to_not be_nil }
+    it { foo; expect(Foo.count).to eq(before_count + 1) }
+  end
+  
+  
+RSpec with Mongoid
+
+9 generate test		 rails g rspec:model Bar
+
+
+require 'rails_helper'
+
+require 'mongo'
+Mongo::Logger.logger.level = ::Logger::INFO
+
+describe Bar, :type=>:model, :orm=>:mongoid do
+  before(:all) do
+    Bar.delete_all
+  end
+
+  context Bar do
+    it { is_expected.to have_field(:name).of_type(String).with_default_value_of(nil) }
+  end
+
+  context "created Bar (let)" do
+    let(:bar) { Bar.create(:name => "test") }
+    after(:each) do
+      bar.delete
+    end
+
+    it { expect(bar).to be_persisted }
+    it { expect(bar.name).to eq("test") }
+    it { expect(Bar.find(bar.id)).to_not be_nil }
+  end
+end
+
+
+10 add gem  gem 'mongoid-rspec', '~> 3.0', '>=3.0.0'
+11 add to spec_helper.rb before Rspec.configure		require 'mongoid-rspec'
+12 add to spec_helper.rb to use mongoid matchers	config.include Mongoid::Matchers, :orm => :mongoid
+  
+DatabaseCleaner with ActiveRecord
+
+14 add to gemfile gem 'database_cleaner', '~>1.5', '>=1.5.3'
+
+15 in rspec_helper.rb set false tu using trasactions config.use_transactional_fixtures = false
+
+16 create directory spec/support
+
+17 create file database_cleaners.rb
+
+18 add 
+
+	require 'database_cleaner'
+
+	shared_context "db_cleanup" do |ar_strategy=:truncation|
+	  before(:all) do
+		DatabaseCleaner[:mongoid].strategy = :truncation
+		DatabaseCleaner[:active_record].strategy = ar_strategy
+		DatabaseCleaner.clean_with(:truncation)
+	  end
+	  after(:all) do
+		DatabaseCleaner.clean_with(:truncation)
+	  end
+	end
+
+	shared_context "db_scope" do
+	  before(:each) do
+		DatabaseCleaner.start
+	  end
+	  after(:each) do
+		DatabaseCleaner.clean
+	  end
+	end
+
+	shared_context "db_cleanup_each" do |ar_strategy=:truncation|
+	  before(:all) do
+		DatabaseCleaner[:mongoid].strategy = :truncation
+		DatabaseCleaner[:active_record].strategy = ar_strategy
+		DatabaseCleaner.clean_with(:truncation)
+	  end
+	  after(:all) do
+		DatabaseCleaner.clean_with(:truncation)
+	  end
+	  before(:each) do
+		DatabaseCleaner.start
+	  end
+	  after(:each) do
+		DatabaseCleaner.clean
+	  end
+	end
+	
+19 add to spec_helper.rb require_relative 'support/database_cleaners.rb'	
+20 include db cleaner
+
+	require 'rails_helper'
+
+	describe Foo, type: :model do
+	  include_context "db_cleanup", :transaction
+	  before(:all) do
+		@foo=Foo.create(:name => "test")
+	  end
+	  let(:foo) { Foo.find(@foo.id) }
+
+	  context "created Foo (let)" do
+		it { expect(foo).to be_persisted }
+		it { expect(foo.name).to eq("test") }
+		it { expect(Foo.find(foo.id)).to_not be_nil }
+	  end
+
+	  context "created Foo (subject)" do
+		subject { @foo }
+
+		it { is_expected.to be_persisted }
+		it { expect(subject.name).to eq("test") }
+		it { expect(Foo.find(subject.id)).to_not be_nil }
+	  end
+	end
+ DatabaseCleaner with Mongoid
+21
+
+	require 'rails_helper'
+
+	require 'mongo'
+	#Mongo::Logger.logger.level = ::Logger::DEBUG
+
+	describe Bar, :type=>:model, :orm=>:mongoid do
+	  include_context "db_cleanup"
+
+	  context Bar do
+		it { is_expected.to have_field(:name).of_type(String).with_default_value_of(nil) }
+	  end
+
+	  context "created Bar (let)" do
+		let(:bar) { Bar.create(:name => "test") }
+		include_context "db_scope"
+
+		it { expect(bar).to be_persisted }
+		it { expect(bar.name).to eq("test") }
+		it { expect(Bar.find(bar.id)).to_not be_nil }
+	  end
+	end
+  
+  
+ DatabaseCleaner Optimizations
+ 
+ 
+ FactoryGirl and Faker
+22 add 		rails g migration AddFooNameConstraint
+
+23 add 
+	gem 'factory_girl_rails', '~>4.7', '>=4.7.0'
+	gem 'faker', '~>1.6', '>=1.6.6'
+
+24 create factory 		rails g factory_girl:model foobars
+
+25 add to foobar factory 
+
+	FactoryGirl.define do
+	  factory :foo_fixed, class: 'Foo' do
+		name "test"
+	  end
+
+	  factory :foo_sequence, class: 'Foo' do
+		sequence(:name) {|n| "test#{n}" }
+	  end
+
+	  factory :foo_names, class: 'Foo' do
+		sequence(:name) {|n| ["larry", "moe", "curly"][n%3]  }
+	  end
+
+	  factory :foo_transient, class: 'Foo' do
+		transient do
+		  male true
+		end
+
+		after(:build) do |object, props|
+		  object.name = props.male ? "Mr Test" : "Ms Test"
+		end
+	  end
+
+	  factory :foo_faker, class: 'Foo' do
+		name { Faker::Name.name }
+	  end
+
+	  factory :foo_ctor, class: 'Foo' do
+		transient do
+		  hash {}
+		end
+		initialize_with { Foo.new(hash) }
+	  end
+
+	  factory :foo, :parent=>:foo_faker do
+	  end
+
+	  factory :bar do
+		name { Faker::Team.name.titleize }
+	  end
+	end	
+
+26 chenge foo_spec.rb
+
+equire 'rails_helper'
+
+describe Foo, type: :model do
+  include_context "db_cleanup", :transaction
+  before(:all) do
+    @foo=FactoryGirl.create(:foo, :name=>"test")
+  end
+  let(:foo) { Foo.find(@foo.id) }
+
+  context "created Foo (let)" do
+    it { expect(foo).to be_persisted }
+    it { expect(foo.name).to eq("test") }
+    it { expect(Foo.find(foo.id)).to_not be_nil }
+  end
+
+  context "created Foo (subject)" do
+    subject { @foo }
+
+    it { is_expected.to be_persisted }
+    it { expect(subject.name).to eq("test") }
+    it { expect(Foo.find(subject.id)).to_not be_nil }
+  end
+end	
+
+Request Specs Overview
+
+First Request Spec
+
+27 rails g rspec:request APIFoos
+
+API GET Resource Instances and Helper ApiModule
+
+28 create api_helper.rb in spec/support folderu 
+
+29 include it in spec helper	require_relative 'support/api_helper.rb'
+30 add to spec helper 		config.include ApiHelper, :type=>:request
+
+API GET Instance and Not Found Error Reporting
+
+31 add support for not found record 
+
+	class ApplicationController < ActionController::API
+	  #make the connection between controller action and associated view
+	  include ActionController::ImplicitRender
+
+	  rescue_from ActiveRecord::RecordNotFound, with: :record_not_found
+	  rescue_from Mongoid::Errors::DocumentNotFound, with: :record_not_found
+
+	  protected
+		def record_not_found(exception) 
+		  payload = {
+			errors: { full_messages:["cannot find id[#{params[:id]}]"] }
+		  }
+		  render :json=>payload, :status=>:not_found
+		  Rails.logger.debug exception.message
+		end
+	end
+	
+	
+ API Create and Wrapped Parameters	
+ 
+ 32 add to foos_controller.rb
+ 
+ wrap_parameters :foo, include: ["name"]
+ 
+ 33 add to wrap_parameters.rb
+ 
+ ActiveSupport.on_load(:action_controller) do
+  include ActionController::ParamsWrapper
+  wrap_parameters format: [:json] if respond_to?(:wrap_parameters)
+end
+
+
+API Update/Delete and DRYing with Ruby Metaprogramming
+
+DRYing API Tests with RSpec Shared Examples
+
+34 generate Bar spec 		rails g rspec:request APIBar
+
+More Shared Examples with API GET Instance
+
+Capybara Setup
+
+35 add to gemfile
+
+  gem 'capybara', '~> 2.10', '>=2.10.1'
+  #gem 'poltergeist', '~> 1.11', '>=1.11.0'
+  gem 'selenium-webdriver', '~> 2.53', '>=2.53.4'
+  #gem 'chromedriver-helper', '~>1.0', '>=1.0.0'
+  #gem 'launchy', '~>2.4', '>=2.4.3'
+  
+36 create feature spec  rails g rspec:feature mainpage
+
+Selenium Webdriver
+
+update spec_helper.rb
+
+Debugging Capybara/Selenium Tests
+
+bindig.pry
+
+
+Poltergeist/PhantomJS Headless Webdriver
+
+37 print screen save_and_open_screenshot
+38 save_and_open_page
+
+Capybara Usage
+
+Capybara Waits
+
+Foo Feature Spec: Foo List
+
+39 create manage_spec 	rails g rspec:feature manage_foos
+
+Foo Feature Spec: Create Foo
+
+Foo UI Helper Module
+
+Code Coverage
+
+40 add to Gemfile		 gem 'simplecov', '~>0', '>=0.12', :require=>false
+
+41 add to spec helper
+
+if ENV["COVERAGE"] == "true"
+    require 'simplecov'
+    SimpleCov.start do
+      add_filter "/spec"
+      add_filter "/config"
+      add_group "foos", ["foo"]
+      add_group "bars", ["bar"]
+    end
+end
+

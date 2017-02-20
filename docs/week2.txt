@@ -1,0 +1,357 @@
+Web Resources and Asset Pipeline Background
+
+1 get all commits in one line		git log --pretty=oneline
+2 to return on start git checkout 0929b115fd5aac12d2d732b3aa3432c660ebc539
+3 git checkout -b server-pages
+4 clean up old files 	git clean -df
+4 rails new . -T
+5 rails g scaffold Foo name --orm active_record
+6 rake db:create
+7 rake db:migrate
+8 run server in production mode 	rails s -e production
+
+9 in console to list assets path		y Rails.application.config.assets.paths
+
+10 export SECRET_KEY_BASE=secret	windows  set SECRET_KEY_BASE=secret
+11 export RAILS_SERVE_STATIC_FILES=true		windows 	set RAILS_SERVE_STATIC_FILES=true
+
+12 precompile assets	rake assets:precompile RAILS_ENV=production
+
+Asset Pipeline Packaging
+
+13 git checkout -b asset-pipeline
+
+14 add gems to gemfile
+
+15 mkdir app/assets/stylesheets
+16 mkdir app/assets/javascripts
+17 create css manifest spa-demo.css
+18 add spa-demo.js
+19 we need to register the files for server to precompile them and make it available
+20 create config/initializers/assets.rb and add
+		Rails.application.config.assets.version = '1.0'
+		Rails.application.config.assets.precompile += %w( spa-demo.js spa-demo.css )
+
+*-***	%W("","") creates array ["",""]
+		
+21 add reference to bootstrap tp css file
+
+	/*
+	 * SPA Demo Stylesheet Manifest File
+	 *
+	 *= require bootstrap
+	 */
+22 add entry to javascript file
+
+	// SPA Demo Javascript Manifest File
+	//= require jquery2
+	//= require bootstrap
+	//= require angular
+	//= require angular-ui-router
+	//= require angular-resource	 
+	
+Asset Pipeline Deployment
+
+23 pust to staging git push staging asset-pipline:master
+
+24 gitk -all
+
+25 delete branch git branch -d gulp
+
+36 git checkout -b spa-app
+
+37 mkdir app/assets/javascripts/spa-demo
+
+38 mkdir app/assets/javascripts/spa-demo/pages
+
+39 add app.module.js to pages folder
+
+		(function() {
+			"use strict";
+
+			angular
+				.module("spa-demo", [
+					"ui.router",
+					"spa-demo.foos"
+				]);
+		})();
+
+40 create main.html in pages folder
+
+<div><h2>Sample App</h2><span>(from spa-demo/pages/main.html)</span><sd-foos></sd-foos></div>
+
+41 add app.constant.js.erb to spa-demo folder
+
+	(function() {
+	  "use strict";
+
+	  angular
+		.module("spa-demo")
+		.constant("spa-demo.APP_CONFIG", {
+		  server_url: "<%= ENV['RAILS_API_URL'] %>",
+
+		  main_page_html: "<%= asset_path('spa-demo/pages/main.html') %>",
+
+		  foos_html: "<%= asset_path('spa-demo/foos/foos.html') %>"
+		});
+
+	})();
+
+
+42 create app.router.js in spa-demo folder
+
+	(function() {
+	  "use strict";
+
+	  angular
+		.module("spa-demo")
+		.config(RouterFunction);
+
+	  RouterFunction.$inject = ["$stateProvider",
+								"$urlRouterProvider", 
+								"spa-demo.APP_CONFIG"];
+
+	  function RouterFunction($stateProvider, $urlRouterProvider, APP_CONFIG) {
+		$stateProvider
+		.state("home",{
+		  url: "/",
+		  templateUrl: APP_CONFIG.main_page_html,
+		  // controller: ,
+		  // controllerAs: ,
+		})
+
+		$urlRouterProvider.otherwise("/");
+	  }
+	})();
+	
+43 spa-demo.js add references to new files from spa-demo folder	
+
+	//= require spa-demo/app.module
+	//= require spa-demo/app.router
+	//= require spa-demo/app.constant
+	
+	
+Sample Resource CRUD Module
+
+44 git checkout -b foos-ui
+
+45 create directory foos in spa-demo and add new file foos.module.js
+
+	(function() {
+	  "use strict";
+
+	  angular
+		.module("spa-demo.foos", [
+		  "ngResource"
+		]);
+	})();
+
+46 add an entry in for 	foos.module.js in spa-demo.js
+
+47 add to app.module.js foos dependency 
+
+(function() {
+  "use strict";
+
+  angular
+    .module("spa-demo", [
+      "ui.router",
+      "spa-demo.foos"
+    ]);
+})();	
+
+Sample Resource Service Skeleton
+
+48 add service foos.service.js to foos folder
+
+	(function() {
+	  "use strict";
+
+	  angular
+		.module("spa-demo.foos")
+		.factory("spa-demo.foos.Foo", FooFactory);
+
+	  FooFactory.$inject = ["$resource", "spa-demo.APP_CONFIG"];
+	  function FooFactory($resource, APP_CONFIG) {
+		return $resource(APP_CONFIG.server_url + "/api/foos/:id",
+		  { id: '@id'},
+		  { 
+			update: { method: "PUT",
+					  transformRequest: buildNestedBody },
+			save: { method: "POST",
+					  transformRequest: buildNestedBody }
+		  }
+		  );
+	  }
+
+	  //nests the default payload below a "foo" element 
+	  //as required by default by Rails API resources
+	  function buildNestedBody(data) {
+	   return angular.toJson({foo: data})
+	  }  
+	})();
+	
+Sample Resource CRUD Controller Skeleton
+
+49	add controller foos.controller.js to foos folder
+
+(function() {
+  "use strict";
+
+  angular
+    .module("spa-demo.foos")
+    .controller("spa-demo.foos.FoosController", FoosController);
+
+  FoosController.$inject = ["spa-demo.foos.Foo"];
+
+  function FoosController(Foo) {
+      var vm = this;
+      vm.foos;
+      vm.foo;
+      vm.edit   = edit;
+      vm.create = create;
+      vm.update = update;
+      vm.remove = remove;      
+
+      activate();
+      return;
+      ////////////////
+      function activate() {
+        newFoo();
+        vm.foos = Foo.query();
+      }
+
+      function newFoo() {
+        vm.foo = new Foo();
+      }
+      function handleError(response) {
+        console.log(response);
+      } 
+      function edit(object) {
+        console.log("selected", object);
+        vm.foo = object;        
+      }
+
+      function create() {
+        //console.log("creating foo", vm.foo);
+        vm.foo.$save()
+          .then(function(response){
+            //console.log(response);
+            vm.foos.push(vm.foo);
+            newFoo();
+          })
+          .catch(handleError);        
+      }
+
+      function update() {
+        //console.log("update", vm.foo);
+        vm.foo.$update()
+          .then(function(response){
+            //console.log(response);
+        })
+        .catch(handleError);        
+      }
+
+      function remove() {
+        //console.log("remove", vm.foo);
+        vm.foo.$delete()
+          .then(function(response){
+            //console.log(response);
+            //remove the element from local array
+            removeElement(vm.foos, vm.foo);
+            //vm.foos = Foo.query();
+            //replace edit area with prototype instance
+            newFoo();
+          })
+          .catch(handleError);                
+      }
+
+
+      function removeElement(elements, element) {
+        for (var i=0; i<elements.length; i++) {
+          if (elements[i].id == element.id) {
+            elements.splice(i,1);
+            break;
+          }        
+        }        
+      }      
+  }
+})();
+
+
+Sample Directive and Template Page
+
+50 add foos.html to foos folder
+
+<div>
+    <h3>Foos</h3>
+    <span>(from spa-demo/foos/foos.html)</span>
+    <form>
+        <div>
+            <label>Name:</label>
+            <input name="name" ng-model="foosVM.foo.name" required="required">
+        </div>
+        <button ng-if="!foosVM.foo.id" type="submit" ng-click="foosVM.create()">Create Foo</button>
+        <div ng-if="foosVM.foo.id">
+            <button type="submit" ng-click="foosVM.update()">Update Foo</button>
+            <button type="submit" ng-click="foosVM.remove()">Delete Foo</button>
+        </div>
+    </form>
+    <ul>
+        <li ng-repeat="foo in foosVM.foos | orderBy:'name'">
+            <a ng-click="foosVM.edit(foo)">{{foo.name}}</a>
+        </li>
+    </ul>
+</div>
+
+51 add directive foos.directive.js to foos folder 
+
+	(function() {
+	  "use strict";
+
+	  angular
+		.module("spa-demo.foos")
+		.directive("sdFoos", FoosDirective);
+
+	  FoosDirective.$inject = ["spa-demo.APP_CONFIG"];
+
+	  function FoosDirective(APP_CONFIG) {
+		var directive = {
+			templateUrl: APP_CONFIG.foos_html,
+			replace: true,
+			bindToController: true,
+			controller: "spa-demo.foos.FoosController",
+			controllerAs: "foosVM",
+			restrict: "E",
+			scope: {},
+			link: link
+		};
+		return directive;
+
+		function link(scope, element, attrs) {
+		  console.log("FoosDirective", scope);
+		}
+	  }
+
+	})();
+	
+Sample CSS Styling
+
+52 create folder 	app/assets/stylesheets/spa-demo
+53 create layout.css in app/assets/stylesheets/spa-demo
+
+SPA Application Deployments
+
+54 git push staging foos-ui:master
+
+55 display logs  heroku logs --remote staging
+
+56 display logs  heroku logs --tail --remote staging
+	
+--------------------------------------------
+http://blog.commandrun.com/rails-asset-pipeline-simple-guide/
+precompile assets if needed(if asset exists but not added)
+
+bundle exec rake assets:precompile  
+
+check asset in console ActionController::Base.helpers.asset_path('spa-demo/pages/main.html')

@@ -1,0 +1,309 @@
+Token-based Authentication
+
+Server: Devise Token Auth Setup
+
+1 git checkout -b authn-api
+
+2 add gem 		gem 'devise_token_auth', '~>0.1', '>=0.1.39'
+
+3 install devise token auth 		rails g devise_token_auth:install User auth
+
+4 user.rb comment out :confirable and :ominiauthable
+
+5 add devise.rb in config/initializers to init Devise
+
+	Devise.setup do |config|
+		#config.email_regexp=/\A[^@\s]+@[^@\s]+\z/
+		config.navigational_formats=[:json]
+	end	
+		
+5 remove version number from migration name [4.2]
+
+6 rake db:migrate
+
+7 application.rb add Rack::Cors
+	:expose => ['access-token', 'expiry', 'token-type', 'uid', 'client']
+
+
+API: Authentication Requirements
+
+8 rails g rspec:request AuthApi
+
+9 add method to application_controller to allow name param
+
+a 	 before_action :configure_permitted_parameters, if: :devise_controller?
+
+b
+	def configure_permitted_parameters
+		  devise_parameter_sanitizer.permit(:sign_up, keys: [:name])
+	end 
+
+API: Account Signup Failures and Error Payloads
+
+Server: Devise Setup Errors Discovered/Fixed
+
+10 change in migration file line 45 change to t.timestamps null:false
+
+API: Authenticated Access Control
+
+11 create resource who knows about logins 		rails g controller authn whoami checkme
+
+API: Authenticate
+
+API: Authenticated Access
+
+API: DRY Token Authentication Specs
+
+Server: Domain Model and Authn Policy
+
+Server: Image (Metadata) and Authn Policy
+
+12 rails-api g scaffold Image caption creator_id:integer:index --orm active_record
+
+13 add to migration that creator_id is required  {null:false}
+
+	class CreateImages < ActiveRecord::Migration
+	  def change
+		create_table :images do |t|
+		  t.string :caption
+		  t.integer :creator_id, {null:false}
+
+		  t.timestamps null: false
+		end
+		add_index :images, :creator_id
+	  end
+	end
+
+14 add to default FactoryGirl factory 
+
+FactoryGirl.define do
+
+  factory :image do
+    sequence(:caption) {|n| n%2==0 ? nil : Faker::Lorem.sentence(3).chomp(".") }
+    creator_id 1
+
+    trait :with_caption do
+      caption { Faker::Lorem.sentence(1).chomp(".") }
+    end
+
+    trait :with_roles do
+      after(:create) do |image|
+        Role.create(:role_name=>Role::ORGANIZER,
+                    :mname=>Image.name,
+                    :mid=>image.id,
+                    :user_id=>image.creator_id)
+      end
+    end
+  end
+
+end
+
+15 add wrap params to	images_controller 	wrap_parameters :image, include: ["caption"]
+
+16 add error part to create, update	render json: {errors:@image.errors.messages}, status: :unprocessable_entity
+
+Server: Things and Authn Policy	
+
+17	rails-api g scaffold Thing name:index description notes --orm active_record
+
+DB: ThingImages Model
+
+18 rails g model ThingImage image:references thing:references priority:integer creator_id:integer --orm active_record
+
+19 add validations to thingImage class	 	validates :image, :thing, presence: true
+
+20 add scopes to ThingImage 
+
+	scope :prioritized,  -> { order(:priority=>:asc) }
+	scope :things,       -> { where(:priority=>0) }
+	scope :primary,      -> { where(:priority=>0).first }
+	
+	scope :with_name,    ->{ joins(:thing).select("thing_images.*, things.name as thing_name")}
+	scope :with_caption, ->{ joins(:image).select("thing_images.*, images.caption as image_caption")}
+	
+21 add to Thing class		
+
+	has_many :thing_images, inverse_of: :thing, dependent: :destroy	
+	scope :not_linked, ->(image) { where.not(:id=>ThingImage.select(:thing_id).where(:image=>image)) }
+
+DB: Custom SQL and Query Scopes	
+
+API: ThingImages Resource and Authn Policy
+
+22 rails-api g resource ThingImage image create update destroy --skip
+
+*** --skip  if anything exists skip it don't ask me questions
+
+23 edit ThingImagesController
+
+API: ThingImages Resource and Authn Specs
+
+24 drop db rake db:drop 
+
+UI: ng-token-auth Setup and Authentication Requirements
+
+25 add to gem file 
+
+	gem 'rails-assets-ng-token-auth', '~>0.0', '>= 0.0.27'
+	gem 'rails-assets-angular-cookie' #required by ng-token-auth
+	
+26 update javascript manifest to use javascript files 
+		//= require angular-cookie
+		//= require ng-token-auth
+27 in asset pipeline add new module authn	
+
+28 add authn module to root module	
+
+29 ng-token-auth must know server adress so we must add config authn.config.js
+
+30 create module config	config.module.js.erb
+
+31 create feature spec		rails-api g rspec:feature authn
+
+UI: Signup 
+
+32 add signup_page.html to javascript/pages folder
+
+33 add new state to app,router.js
+
+.state("accountSignup",{
+      url: "/signup",
+      templateUrl: APP_CONFIG.signup_page_html
+    })
+
+34 add component signup in authn (folder signup)
+
+35 add signup.component.js to signup folder
+
+36 add form for component signup.html
+
+37 add ui_helper.rb and add reference to spec_helper
+
+UI: Signup Error Handling and Form Feedback
+
+UI: Navbar and Authn Session
+
+38 add layout module(folder) and add layout module
+
+39 add navbar folder and component
+
+40 add authn_session folder and component
+
+UI: Successful Login
+
+41 add authn.css
+
+UI: Logout and Persisted Session
+
+UI: Login Error Handling and Styling
+
+UI: Authenticated Access
+
+
+DB: Populating Sample Data with Rakefilet
+
+42 generate rake task		rails g task ptourist reset_all delete_subjects delete_all users subjects
+
+43 run rke task 		rake -T ptourist
+
+44 run against custom target 		rake ptourist:reset_all RAILS_ENV=test
+
+UI: Images Page and Image Selector Component
+
+45 create new spec 		rails-api g rspec:feature AuthzImages
+
+46 add images_page.html to pages folder
+
+47 add route to images_page to app.router.js
+
+48 add images link to navbar
+
+49 add subjects folder and subjects.module.js
+
+50 add images folder to subjects folder and images_selector.html
+
+51 add images.component.js to images folder 
+
+52 add images.service.js to images folder
+
+53 add subjects.css
+
+UI: Display Image Metadata
+
+54 add image editor form image_editor.html
+
+UI: Image Authz Directive
+
+55 create images_authz.dirctive.js
+
+UI: Image Authz Policy Enforcement
+
+UI: Authenticated Things Management
+
+56 rails-api g rspec:feature AuthzThings
+
+UI: Displaying Thing/Image Links
+
+57 add image_thing service
+
+UI: Creating Thing/Image Links
+
+58 change test.rb config.eager_load = true to avoid circular dependency in test 
+
+UI: Managing Thing/Image Links
+
+Server: Rule-based Authorization with Pundit Gem
+
+59 add pundit gem tu gem file ptourist-ui-authz.start		gem 'pundit', '~>1.1', '>=1.1.0'
+
+60 include pundit module in application_controller.rb
+
+62 install pundit 		rails-api g pundit:install
+
+63 create concreate Policy 		rails-api g pundit:policy Image
+
+64 create custom model les policy 		rails-api g pundit:policy Custom
+
+Server: Role Authorization Requirements
+
+Server: User Roles
+
+65 create active record model for roles 	
+	rails-api g model Role user:references:index role_name mname mid:integer --orm active_record
+
+Server: Image Authorization Policy Enforcement
+
+66 Create consern in app/models/concerns/protectable.rb
+
+DB: Image Authorization Policy Enforcement Queries
+
+Server: Thing Authorization Policy Enforcement
+
+Things Authorization
+    add user_roles property to Thing
+    add verify authorized/policy_scoped checks
+    add policy and authorize calls
+    add policy definition
+    add policy_scope call
+    impelement policy_scope/user_roles
+    add organizer role to thing creator
+    have show return requested Thing with roles
+
+    modify things_controller.rb
+    new file app/helpers/things_helper.rb
+    modified _thing.json.builder
+67 helpers are not included by default to include it:
+        add include ActionController::Helpers
+        hepler ThingsHelper
+
+68 generate policy for Thing    rails g pundit:policy Thing
+-----
+solution to 
+
+cannot load such file -- bcrypt_ext
+
+In my case, I uninstalled all versions of bcrypt, with gem uninstall bcrypt and select option 3 (if it exists),
+ and uninstalled all versions of bcrypt-ruby gem with gem uninstall bcrypt-ruby and select option 3 (if it exists),
+ then I installed bcrypt using gem install bcrypt --platform = ruby and I added this line gem 'bcrypt', '~> 3.1.7' in Gemfile. It worked right.
+ 
+ 
