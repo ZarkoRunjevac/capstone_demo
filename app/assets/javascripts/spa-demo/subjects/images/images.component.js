@@ -79,7 +79,7 @@
             } else {
                 newResource();
             }*/
-            $scope.$watch(function(){ return Authz.getAuthorizedUserId(); },
+            $scope.$watch(function(){ return vm.authz.authenticated; },
                 function(){
                     if ($stateParams.id) {
                         reload($stateParams.id);
