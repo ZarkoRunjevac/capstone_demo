@@ -50494,7 +50494,7 @@ window.isEmpty = function(obj) {
             authn_signup_html: "/assets/spa-demo/authn/signup/signup-3d65f8d15ac3e2811771a4faa8f6ccd7bad70a311be52dfd44a2803da2f09ca9.html",
             foos_html: "/assets/spa-demo/foos/foos-83670e8535e8d0527ca77d7b294978810396afc924edc1e9b4fccf4fd2a1a0f9.html",
             image_selector_html: "/assets/spa-demo/subjects/images/image_selector-03563c919d96f3d1285f9c1c5e21a1496823383d2a2dd7eb36c18372193b2c2e.html",
-            image_editor_html: "/assets/spa-demo/subjects/images/image_editor-de66fefb79bfff7cce25d8245d51ad297c3cd5c8a37431e9dc55c40a6757a0e7.html",
+            image_editor_html: "/assets/spa-demo/subjects/images/image_editor-8cf37b28436390dbce6ff9f237ecdf89a08bdd16855a2b461fe35e69226f23a4.html",
             thing_editor_html: "/assets/spa-demo/subjects/things/thing_editor-d078cdf6b0a562439e9ba645e8f840623f9cb41d4deef3277b02370a553d7b33.html",
             thing_selector_html: "/assets/spa-demo/subjects/things/thing_selector-4e44d1bcbf0a304b0c63b76d9e3e2797e272c18f4a7fbcde1d23d12b52ca8413.html",
         });
@@ -51031,17 +51031,15 @@ window.isEmpty = function(obj) {
     }
 
 
-    ImageEditorController.$inject = ["$scope",
-        /*"$q", */
-        "$state",
-        "$stateParams",
-        // "spa-demo.authz.Authz",
-        "spa-demo.subjects.Image"/* ,
-       "spa-demo.subjects.ImageThing",
-        "spa-demo.subjects.ImageLinkableThing",*/
-    ];
-    function ImageEditorController($scope, /*$q,*/ $state, $stateParams,
-                                  /* Authz,*/ Image/*, ImageThing,ImageLinkableThing*/) {
+     ImageEditorController.$inject = ["$scope","$q",
+                                   "$state", "$stateParams",
+                                   "spa-demo.subjects.Image",
+                                   "spa-demo.subjects.ImageThing",
+                                   "spa-demo.subjects.ImageLinkableThing",
+                                   ];
+  function ImageEditorController($scope, $q, $state, $stateParams, 
+                                 Image, ImageThing,ImageLinkableThing) {
+
         var vm=this;
         /*vm.selected_linkables=[];*/
         vm.create = create;
@@ -51052,19 +51050,19 @@ window.isEmpty = function(obj) {
 
         vm.$onInit = function() {
             console.log("ImageEditorController",$scope);
-            if ($stateParams.id) {
-                vm.item=Image.get({id:$stateParams.id});
+            /*if ($stateParams.id) {
+               reload($stateParams.id);
             } else {
                 newResource();
-            }
-            /*$scope.$watch(function(){ return Authz.getAuthorizedUserId(); },
+            }*/
+            $scope.$watch(function(){ return Authz.getAuthorizedUserId(); },
                 function(){
                     if ($stateParams.id) {
                         reload($stateParams.id);
                     } else {
                         newResource();
                     }
-                });*/
+                });
         }
         return;
         //////////////
@@ -51081,7 +51079,7 @@ window.isEmpty = function(obj) {
             vm.item = Image.get({id:itemId});
             vm.things = ImageThing.query({image_id:itemId});
             vm.linkable_things = ImageLinkableThing.query({image_id:itemId});
-            vm.imagesAuthz.newItem(vm.item);
+            /*vm.imagesAuthz.newItem(vm.item);*/
             $q.all([vm.item.$promise,
                 vm.things.$promise]).catch(handleError);
         }
@@ -51092,7 +51090,7 @@ window.isEmpty = function(obj) {
         }
 
         function create() {
-            $scope.imageform.$setPristine();
+            //$scope.imageform.$setPristine();
             vm.item.errors=null;
             vm.item.$save().then(
                 function(){
@@ -51102,16 +51100,18 @@ window.isEmpty = function(obj) {
         }
 
         function update() {
-            $scope.imageform.$setPristine();
-            vm.item.errors = null;
+            //$scope.imageform.$setPristine();
+            /*vm.item.errors = null;
             vm.item.$update().then(
                 function () {
                     console.log("update complete", vm.item);
+                    $scope.imageform.$setPristine();
                     $state.reload();
                 },
-                handleError);
-            /*var update=vm.item.$update();
-            linkThings(update);*/
+                handleError);*/
+            vm.item.errors = null;
+            var update=vm.item.$update();
+            linkThings(update);
         }
 
         function linkThings(parentPromise) {
@@ -51295,6 +51295,32 @@ window.isEmpty = function(obj) {
     }
 })();
 (function() {
+  "use strict";
+
+  angular
+    .module("spa-demo.subjects")
+    .factory("spa-demo.subjects.ImageThing", ImageThing);
+
+  ImageThing.$inject = ["$resource", "spa-demo.config.APP_CONFIG"];
+  function ImageThing($resource, APP_CONFIG) {
+    return $resource(APP_CONFIG.server_url + "/api/images/:image_id/thing_images");
+  }
+
+})();
+(function() {
+  "use strict";
+
+  angular
+    .module("spa-demo.subjects")
+    .factory("spa-demo.subjects.ImageLinkableThing", ImageLinkableThing);
+
+  ImageLinkableThing.$inject = ["$resource", "spa-demo.config.APP_CONFIG"];
+  function ImageLinkableThing($resource, APP_CONFIG) {
+    return $resource(APP_CONFIG.server_url + "/api/images/:image_id/linkable_things");
+  }
+
+})();
+(function() {
     "use strict";
 
     angular
@@ -51348,40 +51374,31 @@ window.isEmpty = function(obj) {
         //////////////
     }
 
-    ThingEditorController.$inject = ["$scope",
-        /*"$q", */
-        "$state",
-        "$stateParams",
-        // "spa-demo.authz.Authz",
-        "spa-demo.subjects.Thing"/* ,
-       "spa-demo.subjects.ThingThing",
-        "spa-demo.subjects.ThingLinkableThing",*/
-    ];
-    function ThingEditorController($scope, /*$q,*/ $state, $stateParams,
-                                  /* Authz,*/ Thing/*, ThingThing,ThingLinkableThing*/) {
+     ThingEditorController.$inject = ["$scope","$q",
+                                   "$state","$stateParams",
+                                   "spa-demo.subjects.Thing",
+                                   "spa-demo.subjects.ThingImage"];
+    function ThingEditorController($scope, $q, $state, $stateParams, 
+                                 Thing, ThingImage) {
         var vm=this;
         /*vm.selected_linkables=[];*/
         vm.create = create;
         vm.clear  = clear;
         vm.update  = update;
         vm.remove  = remove;
+        vm.haveDirtyLinks = haveDirtyLinks;
+        vm.updateImageLinks = updateImageLinks;
         /*vm.linkThings = linkThings;*/
 
         vm.$onInit = function() {
             console.log("ThingEditorController",$scope);
             if ($stateParams.id) {
-                vm.item=Thing.get({id:$stateParams.id});
-            } else {
+                //reload($stateParams.id);
+                $scope.$watch(function(){ return vm.authz.authenticated }, 
+                              function(){ reload($stateParams.id); });
+              } else {
                 newResource();
-            }
-            /*$scope.$watch(function(){ return Authz.getAuthorizedUserId(); },
-                function(){
-                    if ($stateParams.id) {
-                        reload($stateParams.id);
-                    } else {
-                        newResource();
-                    }
-                });*/
+              }
         }
         return;
         //////////////
@@ -51396,11 +51413,32 @@ window.isEmpty = function(obj) {
             var itemId = ThingId ? ThingId : vm.item.id;
             console.log("re/loading Thing", itemId);
             vm.item = Thing.get({id:itemId});
-            vm.things = ThingThing.query({Thing_id:itemId});
+            vm.images = ThingImage.query({thing_id:itemId});
+
+            vm.images.$promise.then(
+            function(){
+              angular.forEach(vm.images, function(ti){
+                ti.originalPriority = ti.priority;            
+              });                     
+            });    
+
+            /*vm.things = ThingThing.query({Thing_id:itemId});
             vm.linkable_things = ThingLinkableThing.query({Thing_id:itemId});
             vm.ThingsAuthz.newItem(vm.item);
             $q.all([vm.item.$promise,
-                vm.things.$promise]).catch(handleError);
+                vm.things.$promise]).catch(handleError);*/
+
+            $q.all([vm.item.$promise,vm.images.$promise]).catch(handleError);    
+        }
+
+        function haveDirtyLinks() {
+          for (var i=0; vm.images && i<vm.images.length; i++) {
+            var ti=vm.images[i];
+            if (ti.toRemove || ti.originalPriority != ti.priority) {
+              return true;
+            }        
+          }
+          return false;
         }
 
         function clear() {
@@ -51418,36 +51456,35 @@ window.isEmpty = function(obj) {
                 handleError);
         }
 
-        function update() {
-            $scope.thingform.$setPristine();
-            vm.item.errors = null;
-            vm.item.$update().then(
-                function () {
-                    console.log("update complete", vm.item);
-                    $state.reload();
-                },
-                handleError);
-            /*var update=vm.item.$update();
-            linkThings(update);*/
+        function update() {      
+          vm.item.errors = null;
+          var update=vm.item.$update();
+          updateImageLinks(update);
         }
 
-        function linkThings(parentPromise) {
-            var promises=[];
-            if (parentPromise) { promises.push(parentPromise); }
-            angular.forEach(vm.selected_linkables, function(linkable){
-                var resource=ThingThing.save({Thing_id:vm.item.id}, {thing_id:linkable});
-                promises.push(resource.$promise);
-            });
 
-            vm.selected_linkables=[];
-            console.log("waiting for promises", promises);
-            $q.all(promises).then(
-                function(response){
-                    console.log("promise.all response", response);
-                    $scope.thingform.$setPristine();
-                    reload();
-                },
-                handleError);
+        function updateImageLinks(promise) {
+
+          console.log("updating links to images");
+          var promises = [];
+          if (promise) { promises.push(promise); }
+          angular.forEach(vm.images, function(ti){
+            if (ti.toRemove) {
+              promises.push(ti.$remove());
+            } else if (ti.originalPriority != ti.priority) {          
+              promises.push(ti.$update());
+            }
+          });
+
+          console.log("waiting for promises", promises);
+          $q.all(promises).then(
+            function(response){
+              console.log("promise.all response", response); 
+              //update button will be disabled when not $dirty
+              $scope.thingform.$setPristine();
+              reload(); 
+            }, 
+            handleError);    
         }
 
         function remove() {
@@ -51544,14 +51581,7 @@ window.isEmpty = function(obj) {
     function ThingsAuthzController($scope, Authn) {
         var vm = this;
         vm.authz={};
-        vm.authz.authenticated = false;
-        vm.authz.canCreate     = false;
-        vm.authz.canQuery      = false;
-        vm.authz.canUpdate     = false;
-        vm.authz.canDelete     = false;
-        vm.authz.canGetDetails = false;
-        vm.authz.canUpdateImage = false;
-        vm.authz.canRemoveImage = false;
+
         vm.authz.canUpdateItem = canUpdateItem;
         //vm.newItem=newItem;
 
@@ -51626,7 +51656,27 @@ window.isEmpty = function(obj) {
 
     }
 })();
+(function() {
+  "use strict";
+
+  angular
+    .module("spa-demo.subjects")
+    .factory("spa-demo.subjects.ThingImage", ThingImage);
+
+  ThingImage.$inject = ["$resource", "spa-demo.config.APP_CONFIG"];
+  function ThingImage($resource, APP_CONFIG) {
+    return $resource(APP_CONFIG.server_url + "/api/things/:thing_id/thing_images/:id",
+      { thing_id: '@thing_id', 
+        id: '@id'},
+      { update: {method:"PUT"} 
+      });
+  }
+
+})();
 // SPA Demo Javascript Manifest File
+
+
+
 
 
 

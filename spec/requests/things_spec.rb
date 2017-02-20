@@ -55,7 +55,7 @@ RSpec.describe "Things", type: :request do
       #must require :name property -- otherwise get :unprocessable_entity
       #must rescue ActionController::ParameterMissing exception
       #must render :bad_request
-      expect(response).to have_http_status(:bad_request)
+      expect(response).to have_http_status(:unprocessable_entity)
     end
   end
   shared_examples "can update" do
@@ -65,7 +65,7 @@ RSpec.describe "Things", type: :request do
     end
     it "reports update error for invalid data" do
       jput thing_path(thing_id), thing_props.merge(:name=>nil)
-      expect(response).to have_http_status(:bad_request)
+      expect(response).to have_http_status(:unprocessable_entity)
     end
   end
   shared_examples "can delete" do
