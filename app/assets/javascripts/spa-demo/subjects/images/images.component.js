@@ -15,10 +15,10 @@
             controller: ImageEditorController,
             bindings: {
                 authz: "<"
-            }/*,
+            },
             require: {
                 imagesAuthz: "^sdImagesAuthz"
-            }*/
+            }
         });
 
 
@@ -33,53 +33,45 @@
 
     ImageSelectorController.$inject = ["$scope",
         "$stateParams",
-        //"spa-demo.authz.Authz",
+        "spa-demo.authz.Authz",
         "spa-demo.subjects.Image"];
-    function ImageSelectorController($scope, $stateParams, /*Authz,*/ Image) {
+    function ImageSelectorController($scope, $stateParams, Authz, Image) {
         var vm=this;
 
         vm.$onInit = function() {
             console.log("ImageSelectorController",$scope);
-            /*$scope.$watch(function(){ return Authz.getAuthorizedUserId(); },
+            $scope.$watch(function(){ return Authz.getAuthorizedUserId(); },
                 function(){
                     if (!$stateParams.id) {
                         vm.items = Image.query();
                     }
-                });*/
-            if(!$stateParams.id){
-                vm.items=Image.query();
-            }
+                });
         }
         return;
         //////////////
     }
 
 
-     ImageEditorController.$inject = ["$scope","$q",
-                                   "$state", "$stateParams",
-                                   "spa-demo.subjects.Image",
-                                   "spa-demo.subjects.ImageThing",
-                                   "spa-demo.subjects.ImageLinkableThing",
-                                   ];
-  function ImageEditorController($scope, $q, $state, $stateParams, 
-                                 Image, ImageThing,ImageLinkableThing) {
-
+    ImageEditorController.$inject = ["$scope","$q",
+        "$state", "$stateParams",
+        "spa-demo.authz.Authz",
+        "spa-demo.subjects.Image",
+        "spa-demo.subjects.ImageThing",
+        "spa-demo.subjects.ImageLinkableThing",
+    ];
+    function ImageEditorController($scope, $q, $state, $stateParams,
+                                   Authz, Image, ImageThing,ImageLinkableThing) {
         var vm=this;
-        /*vm.selected_linkables=[];*/
+        vm.selected_linkables=[];
         vm.create = create;
         vm.clear  = clear;
         vm.update  = update;
         vm.remove  = remove;
-        /*vm.linkThings = linkThings;*/
+        vm.linkThings = linkThings;
 
         vm.$onInit = function() {
             console.log("ImageEditorController",$scope);
-            /*if ($stateParams.id) {
-               reload($stateParams.id);
-            } else {
-                newResource();
-            }*/
-            $scope.$watch(function(){ return vm.authz.authenticated; },
+            $scope.$watch(function(){ return Authz.getAuthorizedUserId(); },
                 function(){
                     if ($stateParams.id) {
                         reload($stateParams.id);
@@ -93,7 +85,7 @@
         function newResource() {
             console.log("newResource()");
             vm.item = new Image();
-            //vm.imagesAuthz.newItem(vm.item);
+            vm.imagesAuthz.newItem(vm.item);
             return vm.item;
         }
 
@@ -103,7 +95,7 @@
             vm.item = Image.get({id:itemId});
             vm.things = ImageThing.query({image_id:itemId});
             vm.linkable_things = ImageLinkableThing.query({image_id:itemId});
-            /*vm.imagesAuthz.newItem(vm.item);*/
+            vm.imagesAuthz.newItem(vm.item);
             $q.all([vm.item.$promise,
                 vm.things.$promise]).catch(handleError);
         }
@@ -114,8 +106,6 @@
         }
 
         function create() {
-            //$scope.imageform.$setPristine();
-            vm.item.errors=null;
             vm.item.$save().then(
                 function(){
                     $state.go(".", {id: vm.item.id});
@@ -124,15 +114,6 @@
         }
 
         function update() {
-            //$scope.imageform.$setPristine();
-            /*vm.item.errors = null;
-            vm.item.$update().then(
-                function () {
-                    console.log("update complete", vm.item);
-                    $scope.imageform.$setPristine();
-                    $state.reload();
-                },
-                handleError);*/
             vm.item.errors = null;
             var update=vm.item.$update();
             linkThings(update);

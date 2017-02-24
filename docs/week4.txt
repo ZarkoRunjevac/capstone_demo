@@ -305,6 +305,25 @@ API: WhoAmI Service with User Roles
 69  rails g rspec:request Whoami
 
 70 create view folder for authn
+
+UI: Authorization Architecture
+
+UI: Authz Service
+
+71 add authz module
+
+UI: Authorization Policy Services
+
+72 create base policy service
+
+73 create images_authz.service.js
+
+74 create things_authz.service.js
+
+UI: Image Authorization
+
+UI: Thing Authorization
+
 -----
 solution to 
 
